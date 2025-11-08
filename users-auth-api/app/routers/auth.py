@@ -1,7 +1,7 @@
 import os, sys
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from passlib.hash import bcrypt
+from passlib.hash import argon2
 
 # Make shared importable
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -27,13 +27,19 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)):
     if role not in {"buyer", "seller", "admin"}:
         raise HTTPException(status_code=400, detail="Invalid role. Use buyer, seller, or admin.")
 
+    if len(payload.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters long")
+
+    if len(payload.password) > 72:
+        raise HTTPException(status_code=400, detail="Password cannot be longer than 72 characters")
+
     existing = db.query(User).filter(User.email == payload.email).first()
     if existing:
         raise HTTPException(status_code=409, detail="Email already registered.")
 
     user = User(
         email=payload.email,
-        password_hash=bcrypt.hash(payload.password),
+        password_hash = argon2.hash(payload.password),
         role=role,
     )
     db.add(user)
@@ -46,8 +52,12 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenOut)
 def login(payload: LoginIn, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
-    if not user or not bcrypt.verify(payload.password, user.password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+   
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+
+    if not argon2.verify(payload.password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
     if not user.is_active:
         raise HTTPException(status_code=403, detail="User is deactivated")
