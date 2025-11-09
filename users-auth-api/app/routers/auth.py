@@ -24,12 +24,12 @@ def get_db():
 @router.post("/register", response_model=TokenOut, status_code=201)
 def register(payload: RegisterIn, db: Session = Depends(get_db)):
     role = payload.role.lower().strip()
+    
     if role not in {"buyer", "seller", "admin"}:
         raise HTTPException(status_code=400, detail="Invalid role. Use buyer, seller, or admin.")
 
     if len(payload.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters long")
-
     if len(payload.password) > 72:
         raise HTTPException(status_code=400, detail="Password cannot be longer than 72 characters")
 
@@ -38,16 +38,31 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)):
         raise HTTPException(status_code=409, detail="Email already registered.")
 
     user = User(
+        fullname=payload.fullname, 
         email=payload.email,
-        password_hash = argon2.hash(payload.password),
+        password_hash=argon2.hash(payload.password),
         role=role,
+        is_active=True,            
+        is_verified=False          
     )
+
     db.add(user)
     db.commit()
     db.refresh(user)
 
-    token = create_access_token({"sub": str(user.id), "email": user.email, "role": user.role}, expires_delta=60)
-    return {"access_token": token}
+    token = create_access_token(
+        {"sub": str(user.id), "email": user.email, "role": user.role},
+        expires_delta=60
+    )
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "email": user.email,
+        "fullname": user.fullname,
+        "role": user.role
+    }
+
 
 @router.post("/login", response_model=TokenOut)
 def login(payload: LoginIn, db: Session = Depends(get_db)):
@@ -63,7 +78,14 @@ def login(payload: LoginIn, db: Session = Depends(get_db)):
         raise HTTPException(status_code=403, detail="User is deactivated")
 
     token = create_access_token({"sub": str(user.id), "email": user.email, "role": user.role}, expires_delta=60)
-    return {"access_token": token}
+    
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "email": user.email,
+        "fullname": user.fullname,
+        "role": user.role
+    }
 
 @router.get("/me", response_model=UserOut)
 def me(user=Depends(get_current_user), db: Session = Depends(get_db)):

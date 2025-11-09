@@ -1,9 +1,10 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 class RegisterIn(BaseModel):
+    fullname: str = Field(..., min_length=3, max_length=500)
     email: EmailStr
     password: str
-    role: str  # buyer | seller | admin
+    role: str
 
 class LoginIn(BaseModel):
     email: EmailStr
@@ -12,6 +13,9 @@ class LoginIn(BaseModel):
 class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    email: str
+    fullname: str
+    role: str
 
 class UserOut(BaseModel):
     id: int
