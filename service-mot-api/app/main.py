@@ -1,16 +1,21 @@
-# app/main.py
-
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from . import models, schemas, crud, database, services
+from fastapi.middleware.cors import CORSMiddleware
 
 # Create FastAPI instance
 app = FastAPI(title="MOT & Services API")
 
-# Initialize the database (create tables)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 database.init_db()
 
-# Dependency to get the database session
 def get_db():
     db = database.SessionLocal()
     try:
@@ -33,6 +38,10 @@ async def create_booking(booking: schemas.BookingCreate, db: Session = Depends(g
 @app.get("/bookings/", response_model=list[schemas.Booking])
 async def get_bookings(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return booking_service(db).get_bookings(skip=skip, limit=limit)
+
+@app.get("/bookings_requests/", response_model=list[schemas.Booking])
+async def get_bookings_by_status(skip: int = 0, limit: int = 10, status: str = "Pending", db: Session = Depends(get_db)):
+    return booking_service(db).get_bookings_by_status(skip=skip, limit=limit, status=status)
 
 @app.get("/bookings/{registration_number}", response_model=schemas.Booking)
 async def get_booking_by_registration_number(registration_number: str, db: Session = Depends(get_db)):

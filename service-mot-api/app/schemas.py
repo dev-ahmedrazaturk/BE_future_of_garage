@@ -4,10 +4,10 @@ from enum import Enum
 
 # Enum for booking status
 class BookingStatus(str, Enum):
-    pending = "Pending"
-    approved = "Approved"
-    rejected = "Rejected"
-    completed = "Completed"
+    Pending = "Pending"
+    Approved = "Approved"
+    Rejected = "Rejected"
+    Completed = "Completed"
 
 class BookingBase(BaseModel):
     name: str  # Client name
@@ -24,7 +24,7 @@ class BookingBase(BaseModel):
     selected_garage: str  # Selected Garage
     date: date  # Booking Date
     time: time  # Booking Time
-    status: BookingStatus = BookingStatus.pending  # Default status to 'Pending'
+    status: BookingStatus = BookingStatus.Pending # Default status to 'Pending'
 
 class BookingCreate(BookingBase):
     pass

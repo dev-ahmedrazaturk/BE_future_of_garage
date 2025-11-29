@@ -12,6 +12,9 @@ def create_booking(db: Session, booking: schemas.BookingCreate):
 def get_bookings(db: Session, skip: int = 0, limit: int = 10):
     return db.query(models.Booking).offset(skip).limit(limit).all()
 
+def get_bookings_by_status(db: Session, skip: int = 0, limit: int = 10, status: str = "Pending"):
+    return db.query(models.Booking).filter(models.Booking.status == status).offset(skip).limit(limit).all()
+
 def get_booking_by_registration_number(db: Session, registration_number: str):
     return db.query(models.Booking).filter(models.Booking.vehicle_reg_number == registration_number).first()
 

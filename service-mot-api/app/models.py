@@ -3,12 +3,11 @@ from sqlalchemy.orm import relationship
 from enum import Enum as PyEnum
 from .database import Base
 
-# Enum for booking status
 class BookingStatus(PyEnum):
-    pending = "Pending"
-    approved = "Approved"
-    rejected = "Rejected"
-    completed = "Completed"
+    Pending = "Pending"
+    Approved = "Approved"
+    Rejected = "Rejected"
+    Completed = "Completed"
 
 class Booking(Base):
     __tablename__ = "bookings"
@@ -28,7 +27,7 @@ class Booking(Base):
     selected_garage = Column(String)  # Selected Garage
     date = Column(Date)  # Booking Date
     time = Column(Time)  # Booking Time
-    status = Column(Enum(BookingStatus), default=BookingStatus.pending)  # Booking Status
+    status = Column(Enum(BookingStatus), default=BookingStatus.Pending)  # Booking Status
 
     # Relationship with Quote
     quote = relationship("Quote", back_populates="booking", uselist=False)

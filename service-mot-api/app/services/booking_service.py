@@ -12,6 +12,9 @@ class BookingService:
 
     def get_bookings(self, skip: int = 0, limit: int = 10):
         return crud.get_bookings(self.db, skip, limit)
+    
+    def get_bookings_by_status(self, skip: int, limit: int, status: str):
+        return crud.get_bookings_by_status(self.db, skip, limit, status)
 
     def get_booking_by_registration(self, registration_number: str):
         return crud.get_booking_by_registration_number(self.db, registration_number)
