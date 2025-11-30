@@ -61,6 +61,20 @@ async def update_booking(registration_number: str, updated_booking: schemas.Book
 async def delete_booking(registration_number: str, db: Session = Depends(get_db)):
     return booking_service(db).delete_booking(registration_number)
 
+@app.put("/bookings/{booking_id}/status", response_model=schemas.Booking)
+async def update_booking_status(
+    booking_id: int,
+    status_update: schemas.BookingStatusUpdate,
+    db: Session = Depends(get_db)
+):
+    updated_booking = booking_service(db).update_status(booking_id, status_update.status)
+
+    if not updated_booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    return updated_booking
+
+
 # Routes for Quote
 @app.post("/quotes/", response_model=schemas.Quote)
 async def create_quote(quote: schemas.QuoteCreate, booking_id: int, db: Session = Depends(get_db)):

@@ -38,6 +38,10 @@ class Booking(BookingBase):
     class Config:
         from_attributes = True  # Replaced 'orm_mode' with 'from_attributes'
 
+
+class BookingStatusUpdate(BaseModel):
+    status: str
+
 # Quote Schema
 class QuoteBase(BaseModel):
     amount: int  # Quote Amount

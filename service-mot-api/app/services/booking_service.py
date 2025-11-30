@@ -24,6 +24,11 @@ class BookingService:
 
     def delete_booking(self, registration_number: str):
         return crud.delete_booking(self.db, registration_number)
+    
+    def update_status(self, booking_id: int, status: str):
+        return crud.update_booking_status(self.db, booking_id, status)
+
+
 
 class QuoteService:
     def __init__(self, db: Session):

@@ -36,6 +36,17 @@ def delete_booking(db: Session, registration_number: str):
         return {"msg": "Booking deleted"}
     return {"msg": "Booking not found"}
 
+def update_booking_status(db: Session, booking_id: int, status: str):
+    booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+    if not booking:
+        return None
+
+    booking.status = status
+    db.commit()
+    db.refresh(booking)
+    return booking
+
+
 # Quote CRUD
 def create_quote(db: Session, quote: schemas.QuoteCreate, booking_id: int):
     db_quote = models.Quote(**quote.dict(), booking_id=booking_id)
