@@ -67,7 +67,6 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenOut)
 def login(payload: LoginIn, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
-   
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
@@ -77,7 +76,7 @@ def login(payload: LoginIn, db: Session = Depends(get_db)):
     if not user.is_active:
         raise HTTPException(status_code=403, detail="User is deactivated")
 
-    token = create_access_token({"sub": str(user.id), "email": user.email, "role": user.role}, expires_delta=60)
+    token = create_access_token({"sub": str(user.id), "fullname": user.fullname, "email": user.email, "role": user.role}, expires_delta=60)
     
     return {
         "access_token": token,

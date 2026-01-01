@@ -1,3 +1,4 @@
+import os
 from fastapi.params import Depends
 import jwt
 from fastapi import HTTPException
@@ -5,7 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from typing import Dict
 
 # Secret key to decode the JWT token, this should match with the user authentication service's secret
-SECRET_KEY = "your-secret-key"
+SECRET_KEY = os.getenv("JWT_SECRET", "supersecretkey")
 ALGORITHM = "HS256"
 
 # OAuth2PasswordBearer is used to extract the token from the Authorization header

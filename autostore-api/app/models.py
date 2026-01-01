@@ -1,14 +1,17 @@
+# app/models.py
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
- 
- 
+
+# Product Model
+
+# Product Model
 class Product(Base):
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, index=True)
-    seller_user_id = Column(Integer)  # Store the user ID (no foreign key)
+    seller_user_id = Column(Integer, nullable=False)  # Ensure that seller_user_id is never null
     name = Column(String, index=True)
     description = Column(String)
     price = Column(Float)
@@ -17,11 +20,12 @@ class Product(Base):
     stock = Column(Integer)
     active = Column(Boolean, default=True)
     added_at = Column(DateTime, default=func.now())
-
     seller_username = Column(String)  # Store seller's username (optional)
 
     # Relationship with CartItem (if needed)
     cart_items = relationship("CartItem", back_populates="product")
+    order_items = relationship("OrderItem", back_populates="product")  # Relationship to OrderItem
+    reviews = relationship("Review", back_populates="product")  # Relationship to Review
 
 # Cart Model
 class Cart(Base):
@@ -33,7 +37,6 @@ class Cart(Base):
     created_at = Column(DateTime, default=func.now())
 
     # Relationships
-    user = relationship("User", back_populates="carts")
     items = relationship("CartItem", back_populates="cart")
 
 # CartItem Model
@@ -48,7 +51,7 @@ class CartItem(Base):
 
     # Relationships
     cart = relationship("Cart", back_populates="items")
-    product = relationship("Product")
+    product = relationship("Product", back_populates="cart_items")  # Added back_populates to Product
 
 # Order Model
 class Order(Base):
@@ -66,9 +69,9 @@ class Order(Base):
     created_at = Column(DateTime, default=func.now())
 
     # Relationships
-    user = relationship("User", back_populates="orders")
-    seller = relationship("User", back_populates="orders_as_seller")
     items = relationship("OrderItem", back_populates="order")
+    payment = relationship("Payment", back_populates="order", uselist=False)  # One payment per order
+    shipment = relationship("Shipment", back_populates="order", uselist=False)  # One shipment per order
 
 # OrderItem Model
 class OrderItem(Base):
@@ -82,7 +85,7 @@ class OrderItem(Base):
 
     # Relationships
     order = relationship("Order", back_populates="items")
-    product = relationship("Product")
+    product = relationship("Product", back_populates="order_items")  # Added back_populates to Product
 
 # Payment Model
 class Payment(Base):
@@ -96,7 +99,7 @@ class Payment(Base):
     created_at = Column(DateTime, default=func.now())
 
     # Relationships
-    order = relationship("Order")
+    order = relationship("Order", back_populates="payment")
 
 # Shipment Model
 class Shipment(Base):
@@ -110,7 +113,7 @@ class Shipment(Base):
     updated_at = Column(DateTime, default=func.now())
 
     # Relationships
-    order = relationship("Order")
+    order = relationship("Order", back_populates="shipment")
 
 # DiscountCode Model
 class DiscountCode(Base):
@@ -135,5 +138,4 @@ class Review(Base):
     created_at = Column(DateTime, default=func.now())
 
     # Relationships
-    product = relationship("Product")
-    user = relationship("User")
+    product = relationship("Product", back_populates="reviews")  # Added back_populates to Product
