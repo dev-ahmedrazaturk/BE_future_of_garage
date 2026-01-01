@@ -292,7 +292,7 @@ def get_order_items_by_order(order_id: int, db: Session = Depends(get_db)):
 
 
 #payments
-stripe.api_key = "sk_test_51skogIDTy09Pqg1f11B8RpnNyMkMmDTq5TL3ukooQxCukt1QZcCj6e6Keye21EjayblwcdQ3orSyk4mNcbza1tZhg920aEsNg7XS"
+stripe.api_key = "sk_test_51SkogIDTy0PGqlf1EOTNAoaX6Pl2cXfcmO7bWzB66BcAlMekEArbVRKmCUs17KwiY6xT6LE0sz6UZ60CihN148Gf00nnIRBW9w"
 @app.post("/payments/", response_model=PaymentResponse)
 def create_payment_endpoint(payment: PaymentCreate, db: Session = Depends(get_db)):
     return create_payment(db=db, payment=payment)

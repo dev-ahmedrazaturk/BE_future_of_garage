@@ -1,10 +1,11 @@
 # app/crud.py
 from http.client import HTTPException
+import logging
 from sqlalchemy.orm import Session
 import stripe
 from app.models import Cart, CartItem, Order, OrderItem, Payment, Product
 from app.schemas import CartItemCreate, OrderCreate, OrderItemCreate, OrderUpdate, PaymentCreate, ProductCreate, CartCreate, CartUpdate, CartResponse
-
+from fastapi import HTTPException, status
 
 def create_product(db: Session, product: ProductCreate):
     # Extract seller_user_id explicitly
@@ -179,26 +180,23 @@ def delete_order_item(db: Session, order_item_id: int):
 def get_order_items_by_order(db: Session, order_id: int):
     return db.query(OrderItem).filter(OrderItem.order_id == order_id).all()
 
-import stripe
-from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
-from .models import Payment
-from .schemas import PaymentCreate
 
-# Set your stripe secret key here
-stripe.api_key = "sk_test_4eC39HqLyjWDarjtT1zdp7dc"  # Replace with your actual test key
+
+stripe.api_key = "sk_test_51SkogIDTy0PGqlf1EOTNAoaX6Pl2cXfcmO7bWzB66BcAlMekEArbVRKmCUs17KwiY6xT6LE0sz6UZ60CihN148Gf00nnIRBW9w"
 
 def create_payment(db: Session, payment: PaymentCreate):
     try:
-
-        print("Creating payment with the following details:", payment)
-        # Create a PaymentIntent with Stripe
+        # Log the details of the payment request
+        logging.info(f"Creating payment with the following details: order_id={payment.order_id} transaction_id='{payment.transaction_id}' amount={payment.amount} status='{payment.status}'")
+        
+        # Create a PaymentIntent with Stripe and use automatic payment methods
         intent = stripe.PaymentIntent.create(
-            amount=int(payment.amount * 100),  # Convert to the smallest unit (e.g., cents)
+            amount=int(payment.amount * 100),  # Stripe works with amounts in the smallest currency unit (e.g., cents for GBP)
             currency='gbp',  # Use GBP currency
             payment_method=payment.transaction_id,  # The payment method ID (received from the frontend)
-            confirmation_method='manual',
-            confirm=True
+            automatic_payment_methods={
+                'enabled': True  # Automatically enable the best available payment method
+            }
         )
         
         # After the payment is confirmed, create the payment entry in the DB
@@ -213,27 +211,32 @@ def create_payment(db: Session, payment: PaymentCreate):
         db.commit()
         db.refresh(db_payment)
         
+        logging.info(f"Payment successfully created: {db_payment}")
         return db_payment  # Return the created payment record
     
     except stripe.error.CardError as e:
+        # Catch card errors (invalid card, insufficient funds, etc.)
         body = e.json_body
         err = body.get('error', {})
+        logging.error(f"Card Error: {err.get('message')}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Payment failed: {err.get('message')}"
         )
     
     except stripe.error.StripeError as e:
+        # Catch general Stripe API errors
+        logging.error(f"Stripe Error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while processing the payment."
         )
     
     except Exception as e:
-        # Handle any other unforeseen errors
+        # Catch any other unforeseen errors
+        logging.error(f"Unexpected Error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
-
 
