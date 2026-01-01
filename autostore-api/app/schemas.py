@@ -1,3 +1,4 @@
+from typing import List   
 from pydantic import BaseModel, validator
 from datetime import datetime
 from typing import Optional
@@ -58,31 +59,27 @@ class ProductResponse(ProductBase):
         return obj
 
 
-# ==================== Cart Schemas ====================
-
+# Cart Schema
 class CartBase(BaseSchema):
     user_id: Optional[int] = None
     status: Optional[str] = "ACTIVE"  # ACTIVE / CHECKED_OUT
 
 
-class CartCreate(CartBase):
-    user_id: int
+class CartCreate(BaseModel):
+    status: Optional[str] = "ACTIVE"  # Default status to ACTIVE
+     
 
-
+# CartUpdate schema for updating a cart (all fields are optional)
 class CartUpdate(CartBase):
     pass
 
-
-class CartResponse(CartBase):
+class CartResponse(BaseModel):
     id: int
-    created_at: str
+    user_id: int
+    status: str
 
-    @classmethod
-    def from_orm(cls, obj):
-        obj = super().from_orm(obj)
-        if isinstance(obj.created_at, datetime):
-            obj.created_at = obj.created_at.strftime('%Y-%m-%d %H:%M:%S')
-        return obj
+    class Config:
+        orm_mode = True
 
 
 # ==================== CartItem Schemas ====================
@@ -127,15 +124,24 @@ class OrderBase(BaseSchema):
     status: Optional[str] = "CREATED"  # CREATED / PAID / SHIPPED / DELIVERED / CANCELLED
 
 
-class OrderCreate(OrderBase):
-    user_id: int
+
+class OrderItemCreate(BaseModel):
+    product_id: int
+    quantity: int
+    unit_price: float
+
+class OrderCreate(BaseModel):
     seller_user_id: int
     subtotal: float
     tax: float
     shipping_cost: float
     discount_amount: float
     total: float
-    status: str
+    status: Optional[str] = "CREATED"  # Default to "CREATED" if not provided
+    items: List[OrderItemCreate]  # List of items in the order
+
+    class Config:
+        orm_mode = True  
 
 
 class OrderUpdate(OrderBase):
@@ -144,14 +150,8 @@ class OrderUpdate(OrderBase):
 
 class OrderResponse(OrderBase):
     id: int
-    created_at: str
 
-    @classmethod
-    def from_orm(cls, obj):
-        obj = super().from_orm(obj)
-        if isinstance(obj.created_at, datetime):
-            obj.created_at = obj.created_at.strftime('%Y-%m-%d %H:%M:%S')
-        return obj
+    
 
 
 # ==================== OrderItem Schemas ====================
@@ -162,12 +162,6 @@ class OrderItemBase(BaseSchema):
     quantity: Optional[int] = None
     unit_price: Optional[float] = None
 
-
-class OrderItemCreate(OrderItemBase):
-    order_id: int
-    product_id: int
-    quantity: int
-    unit_price: float
 
 
 class OrderItemUpdate(OrderItemBase):
@@ -185,33 +179,30 @@ class OrderItemResponse(OrderItemBase):
 
 # ==================== Payment Schemas ====================
 
-class PaymentBase(BaseSchema):
-    order_id: Optional[int] = None
-    transaction_id: Optional[str] = None
-    amount: Optional[float] = None
-    status: Optional[str] = "PENDING"  # SUCCESS / FAILED / PENDING
+class PaymentBase(BaseModel):
+    order_id: int
+    transaction_id: str
+    amount: float
+    status: str = "PENDING"  # Default status can be "PENDING"
 
+    class Config:
+        orm_mode = True
 
 class PaymentCreate(PaymentBase):
+    pass  # You can use this to create a payment.
+
+
+
+class PaymentResponse(BaseModel):
+    id: int
     order_id: int
     transaction_id: str
     amount: float
     status: str
 
-
-class PaymentUpdate(PaymentBase):
-    pass
-
-
-class PaymentResponse(PaymentBase):
-    id: int
-
-    @classmethod
-    def from_orm(cls, obj):
-        obj = super().from_orm(obj)
-        return obj
-
-
+    class Config:
+        orm_mode = True
+        
 # ==================== Shipment Schemas ====================
 
 class ShipmentBase(BaseSchema):
