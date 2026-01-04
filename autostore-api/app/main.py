@@ -8,8 +8,9 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.database import SessionLocal, engine, Base
 from app import crud, models, schemas
-from app.schemas import CartCreate, CartUpdate, CartResponse, PaymentCreate, PaymentResponse
+from app.schemas import CartCreate, CartUpdate, CartResponse, PaymentCreate, PaymentIntentRequest, PaymentIntentResponse, PaymentResponse
 from app.crud import create_payment
+from fastapi.middleware.cors import CORSMiddleware
 
 # Ensure we can import the shared package from project root
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -298,8 +299,30 @@ def create_payment_endpoint(payment: PaymentCreate, db: Session = Depends(get_db
     return create_payment(db=db, payment=payment)
 
 
+stripe_secret_key = "sk_test_51SkogIDTy0PGqlf1EOTNAoaX6Pl2cXfcmO7bWzB66BcAlMekEArbVRKmCUs17KwiY6xT6LE0sz6UZ60CihN148Gf00nnIRBW9w"
+if not stripe_secret_key:
+    raise RuntimeError("Missing STRIPE_SECRET_KEY environment variable")
 
+stripe.api_key = stripe_secret_key
+@app.post("/payments/create-intent", response_model=PaymentIntentResponse)
+async def create_payment_intent(payment: PaymentIntentRequest):
+    try:
+        # Create a PaymentIntent with the amount in pence
+        intent = stripe.PaymentIntent.create(
+            amount=payment.amount,  # Amount in pence (GBP pennies)
+            currency="gbp",  # Set the currency as GBP
+            payment_method_types=["card"],  # Optional: You can specify allowed payment methods
+        )
 
+        return {"clientSecret": intent.client_secret}
+
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=400, detail=str(e.user_message))
+
+# This is to test if the server is up
+@app.get("/")
+async def read_root():
+    return {"message": "Stripe payment API is working!"}
 
 # Override the default OpenAPI generation to include our custom security
 def get_openapi():
@@ -323,3 +346,12 @@ def get_openapi():
 # Override the default OpenAPI generation
 app.openapi_schema = app.openapi()
 app.openapi = get_openapi
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:4200"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)

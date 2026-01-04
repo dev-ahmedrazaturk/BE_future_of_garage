@@ -191,11 +191,11 @@ def create_payment(db: Session, payment: PaymentCreate):
         
         # Create a PaymentIntent with Stripe and use automatic payment methods
         intent = stripe.PaymentIntent.create(
-            amount=int(payment.amount * 100),  # Stripe works with amounts in the smallest currency unit (e.g., cents for GBP)
-            currency='gbp',  # Use GBP currency
-            payment_method=payment.transaction_id,  # The payment method ID (received from the frontend)
+            amount=int(payment.amount * 100),
+            currency='gbp',
+            payment_method=payment.transaction_id,
             automatic_payment_methods={
-                'enabled': True  # Automatically enable the best available payment method
+                'enabled': True
             }
         )
         

@@ -202,6 +202,12 @@ class PaymentResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class PaymentIntentRequest(BaseModel):
+    amount: int  # Amount in pence (GBP pennies)
+
+class PaymentIntentResponse(BaseModel):
+    clientSecret: str
         
 # ==================== Shipment Schemas ====================
 
