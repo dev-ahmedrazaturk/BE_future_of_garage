@@ -17,7 +17,7 @@ app = FastAPI(title="Users & Auth API")
 # CORS (adjust origins as needed)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://be-future-of-garage-0u2k.onrender.com","*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
