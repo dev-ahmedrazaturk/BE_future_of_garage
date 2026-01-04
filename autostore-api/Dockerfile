@@ -13,8 +13,8 @@ RUN python -m venv /venv
 # Step 5: Install dependencies inside the virtual environment
 RUN /venv/bin/pip install --no-cache-dir -r requirements.txt
 
-# Step 6: Expose the port the app runs on
-EXPOSE 8003
+# # Step 6: Expose the port the app runs on
+# EXPOSE 8003
 
 # Step 7: Command to run FastAPI using Uvicorn (with --reload for development)
-CMD ["/venv/bin/uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8003"]
+CMD ["/venv/bin/uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0"]
