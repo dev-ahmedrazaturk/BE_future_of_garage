@@ -1,10 +1,11 @@
 import os, sys
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
-# Ensure we can import the shared package from project root
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 from shared.jwt_utils import decode_access_token  # noqa: E402
+
+# # Ensure we can import the shared package from project root
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+# from shared.jwt_utils import decode_access_token  # noqa: E402
 
 security = HTTPBearer()
 
