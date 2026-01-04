@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from passlib.hash import argon2
 
 # Make shared importable
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 from shared.jwt_utils import create_access_token  # noqa: E402
 
 from ..database import SessionLocal
