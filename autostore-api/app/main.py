@@ -12,9 +12,11 @@ from app.schemas import CartCreate, CartUpdate, CartResponse, PaymentCreate, Pay
 from app.crud import create_payment
 from fastapi.middleware.cors import CORSMiddleware
 
-# Ensure we can import the shared package from project root
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-from shared.jwt_utils import decode_access_token 
+from shared.jwt_utils import decode_access_token
+
+# # Ensure we can import the shared package from project root
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+# from shared.jwt_utils import decode_access_token 
 
 # OAuth2PasswordBearer for extracting the token from Authorization header
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
