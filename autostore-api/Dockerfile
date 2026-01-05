@@ -24,6 +24,12 @@ RUN python -m pip install --upgrade pip setuptools wheel \
 COPY . .
 
 # Render sets $PORT. Default to 10000 if not set.
-EXPOSE 10000
+# EXPOSE 10000
 
-CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"
+# CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"
+
+# # Step 6: Expose the port the app runs on
+# EXPOSE 8003
+
+# Step 7: Command to run FastAPI using Uvicorn (with --reload for development)
+CMD ["/venv/bin/uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0"]
