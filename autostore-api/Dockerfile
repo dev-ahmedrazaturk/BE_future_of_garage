@@ -1,32 +1,17 @@
-# Render-friendly FastAPI Dockerfile
-FROM python:3.12-slim
+# Step 1: Use an official Python runtime as a parent image
+FROM python:3.9-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
-
+# Step 2: Set the working directory in the container
 WORKDIR /app
 
-# (Optional but helpful) build tools for any packages that might need compiling
-# If your build works without this, you can remove this RUN block.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install dependencies first (better caching)
-COPY requirements.txt .
-
-RUN python -m pip install --upgrade pip setuptools wheel \
- && python -m pip install -r requirements.txt
-
-# Copy the rest of the app
+# Step 3: Copy the current directory contents into the container
 COPY . .
 
-# Render sets $PORT. Default to 10000 if not set.
-# EXPOSE 10000
+# Step 4: Create and activate a virtual environment inside the container
+RUN python -m venv /venv
 
-# CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"
+# Step 5: Install dependencies inside the virtual environment
+RUN /venv/bin/pip install --no-cache-dir -r requirements.txt
 
 # # Step 6: Expose the port the app runs on
 # EXPOSE 8003
