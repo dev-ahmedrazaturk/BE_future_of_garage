@@ -1,11 +1,13 @@
-import os
-import sys
+import json
+import boto3
+from pydantic import BaseModel, EmailStr
+from typing import List, Optional, Union
 import stripe
 
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, OAuth2PasswordBearer, HTTPBearer
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from app.database import SessionLocal, engine, Base
 from app import crud, models, schemas
 from app.schemas import CartCreate, CartUpdate, CartResponse, PaymentCreate, PaymentIntentRequest, PaymentIntentResponse, PaymentResponse
@@ -20,6 +22,13 @@ from shared.jwt_utils import decode_access_token
 
 # OAuth2PasswordBearer for extracting the token from Authorization header
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+class EmailRequest(BaseModel):
+    to: Union[EmailStr, List[EmailStr]]
+    subject: str
+    body_text: Optional[str] = ""
+    body_html: Optional[str] = None
+
 
 # Dependency to get DB session
 def get_db():
@@ -325,6 +334,36 @@ async def create_payment_intent(payment: PaymentIntentRequest):
 @app.get("/")
 async def read_root():
     return {"message": "Stripe payment API is working!"}
+
+lambda_client = boto3.client("lambda", region_name="eu-west-2")  
+LAMBDA_NAME = "send-email-lambda" 
+
+@app.post("/email/send")
+def send_email(req: EmailRequest):
+    payload = req.model_dump()
+    if isinstance(payload["to"], list):
+        payload["to"] = [str(x) for x in payload["to"]]
+    else:
+        payload["to"] = str(payload["to"])
+
+    try:
+        resp = lambda_client.invoke(
+            FunctionName=LAMBDA_NAME,
+            InvocationType="RequestResponse",
+            Payload=json.dumps(payload).encode("utf-8"),
+        )
+        result_bytes = resp["Payload"].read()
+        result = json.loads(result_bytes.decode("utf-8"))
+
+        if not result.get("ok"):
+            raise HTTPException(status_code=502, detail={"lambda_result": result})
+
+        return result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 # Override the default OpenAPI generation to include our custom security
 def get_openapi():
