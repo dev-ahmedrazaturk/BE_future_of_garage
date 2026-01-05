@@ -349,11 +349,13 @@ def get_openapi():
 app.openapi_schema = app.openapi()
 app.openapi = get_openapi
 
-
+ 
+# CORS (adjust origins as needed)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+

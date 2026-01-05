@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Create FastAPI instance
 app = FastAPI(title="MOT & Services API")
 
+# CORS (adjust origins as needed)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,6 +14,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 database.init_db()
 
