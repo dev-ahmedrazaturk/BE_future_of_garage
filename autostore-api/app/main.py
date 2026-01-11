@@ -3,7 +3,6 @@ import boto3
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional, Union
 import stripe
-
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, OAuth2PasswordBearer, HTTPBearer
 from sqlalchemy.orm import Session
@@ -13,7 +12,7 @@ from app import crud, models, schemas
 from app.schemas import CartCreate, CartUpdate, CartResponse, PaymentCreate, PaymentIntentRequest, PaymentIntentResponse, PaymentResponse
 from app.crud import create_payment
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.lambda_email import invoke_send_email
 from shared.jwt_utils import decode_access_token
 
 # # Ensure we can import the shared package from project root
@@ -28,7 +27,6 @@ class EmailRequest(BaseModel):
     subject: str
     body_text: Optional[str] = ""
     body_html: Optional[str] = None
-
 
 # Dependency to get DB session
 def get_db():
@@ -335,34 +333,30 @@ async def create_payment_intent(payment: PaymentIntentRequest):
 async def read_root():
     return {"message": "Stripe payment API is working!"}
 
-lambda_client = boto3.client("lambda", region_name="eu-west-2")  
-LAMBDA_NAME = "send-email-lambda" 
 
 @app.post("/email/send")
 def send_email(req: EmailRequest):
     payload = req.model_dump()
+
+    # Convert EmailStr to strings
     if isinstance(payload["to"], list):
         payload["to"] = [str(x) for x in payload["to"]]
     else:
         payload["to"] = str(payload["to"])
 
     try:
-        resp = lambda_client.invoke(
-            FunctionName=LAMBDA_NAME,
-            InvocationType="RequestResponse",
-            Payload=json.dumps(payload).encode("utf-8"),
-        )
-        result_bytes = resp["Payload"].read()
-        result = json.loads(result_bytes.decode("utf-8"))
+        result = invoke_send_email(payload)
 
         if not result.get("ok"):
-            raise HTTPException(status_code=502, detail={"lambda_result": result})
+            raise HTTPException(status_code=502, detail=result)
 
         return result
 
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
+    
 
 
 # Override the default OpenAPI generation to include our custom security
